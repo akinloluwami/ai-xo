@@ -117,7 +117,7 @@ export default function TicTacToe() {
   const [gameStarted, setGameStarted] = useState(false);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [autoPlay, setAutoPlay] = useState(true);
-  const historyEndRef = useRef<HTMLDivElement>(null);
+  const historyContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const randomX =
@@ -208,7 +208,12 @@ export default function TicTacToe() {
   }, [gameStarted, currentPlayer, isGameOver, autoPlay, isThinking, board]);
 
   useEffect(() => {
-    historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (historyContainerRef.current) {
+      historyContainerRef.current.scrollTo({
+        top: historyContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [moveHistory]);
 
   const startGame = () => {
@@ -217,7 +222,7 @@ export default function TicTacToe() {
   };
 
   return (
-    <div className="h-screen bg-[#050505] text-zinc-100 font-sans selection:bg-zinc-800 flex flex-col overflow-hidden">
+    <div className="h-dvh bg-[#050505] text-zinc-100 font-sans selection:bg-zinc-800 flex flex-col overflow-hidden">
       <main className="flex-1 max-w-6xl mx-auto w-full p-4 md:p-8 flex flex-col min-h-0">
         {!gameStarted ? (
           <div className="w-full h-full overflow-y-auto">
@@ -287,9 +292,9 @@ export default function TicTacToe() {
             </div>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-12 gap-8 flex-1 min-h-0">
-            <div className="lg:col-span-8 flex flex-col gap-6 overflow-y-auto lg:overflow-visible">
-              <div className="grid grid-cols-2 gap-4">
+          <div className="grid lg:grid-cols-12 gap-8 flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
+            <div className="lg:col-span-8 flex flex-col gap-6 lg:overflow-y-auto p-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
                   className={`p-4 rounded-2xl border transition-all duration-300 ${
                     currentPlayer === "X" && !isGameOver
@@ -503,7 +508,7 @@ export default function TicTacToe() {
               </div>
             </div>
 
-            <div className="lg:col-span-4 flex flex-col h-full min-h-[300px] lg:min-h-0">
+            <div className="lg:col-span-4 flex flex-col h-[300px] lg:h-full lg:min-h-0">
               <div className="bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 flex flex-col h-full overflow-hidden">
                 <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between shrink-0">
                   <h3 className="font-bold text-zinc-300">Match History</h3>
@@ -512,7 +517,10 @@ export default function TicTacToe() {
                   </span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div
+                  ref={historyContainerRef}
+                  className="flex-1 overflow-y-auto p-4 space-y-3"
+                >
                   {moveHistory.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-3 opacity-60">
                       <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
@@ -555,7 +563,6 @@ export default function TicTacToe() {
                       );
                     })
                   )}
-                  <div ref={historyEndRef} />
                 </div>
               </div>
             </div>
