@@ -3,8 +3,16 @@ import { generateText } from "ai";
 export const runtime = "edge";
 
 export async function POST(req: Request) {
+  let board: (string | null)[] | null = null;
+
   try {
-    const { board, player, model } = await req.json();
+    const body = await req.json();
+    board = body.board;
+    const { player, model } = body;
+
+    if (!board) {
+      throw new Error("Board is required");
+    }
 
     const prompt = `You are playing tic-tac-toe. You are player "${player}".
 The current board state is (0-8, where 0 is top-left, 8 is bottom-right):
@@ -46,6 +54,25 @@ Respond with ONLY a single number (0-8) indicating which empty position you want
     return Response.json({ position, rawResponse: text });
   } catch (error) {
     console.error("Error getting AI move:", error);
+
+    // Fallback to random move if AI fails
+    if (board && Array.isArray(board)) {
+      const availablePositions = board
+        .map((cell, index) => (cell === null ? index : null))
+        .filter((val): val is number => val !== null);
+
+      if (availablePositions.length > 0) {
+        const randomPosition =
+          availablePositions[
+            Math.floor(Math.random() * availablePositions.length)
+          ];
+        return Response.json({
+          position: randomPosition,
+          rawResponse: "Fallback (Random)",
+        });
+      }
+    }
+
     return Response.json({ error: "Failed to get AI move" }, { status: 500 });
   }
 }
