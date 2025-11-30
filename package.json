@@ -11,6 +11,8 @@
   "dependencies": {
     "ai": "^5.0.104",
     "next": "16.0.5",
+    "posthog-js": "^1.298.1",
+    "posthog-node": "^5.14.1",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
