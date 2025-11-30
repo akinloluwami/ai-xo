@@ -220,67 +220,69 @@ export default function TicTacToe() {
     <div className="h-screen bg-[#050505] text-zinc-100 font-sans selection:bg-zinc-800 flex flex-col overflow-hidden">
       <main className="flex-1 max-w-6xl mx-auto w-full p-4 md:p-8 flex flex-col min-h-0">
         {!gameStarted ? (
-          <div className="max-w-2xl mx-auto mt-12 overflow-y-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-white">
-                Choose Your Fighters
-              </h1>
-              <p className="text-zinc-400 text-lg">
-                Select the AI models that will compete against each other.
-              </p>
-            </div>
-
-            <div className="bg-zinc-900/50 rounded-2xl shadow-xl border border-zinc-800">
-              <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-800">
-                <div className="p-8 space-y-6 bg-zinc-900/30 rounded-t-2xl md:rounded-tr-none md:rounded-tl-2xl">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-indigo-400 shadow-sm border border-zinc-700">
-                      <XIcon className="w-7 h-7" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-xl">Player X</h3>
-                      <p className="text-sm text-zinc-400">First Move</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <ModelSelector
-                      label="AI Model"
-                      selectedModel={modelX}
-                      onSelect={setModelX}
-                    />
-                  </div>
-                </div>
-
-                <div className="p-8 space-y-6 bg-zinc-900/30 md:rounded-tr-2xl">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-rose-400 shadow-sm border border-zinc-700">
-                      <OIcon className="w-7 h-7" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-xl">Player O</h3>
-                      <p className="text-sm text-zinc-400">Second Move</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <ModelSelector
-                      label="AI Model"
-                      selectedModel={modelO}
-                      onSelect={setModelO}
-                    />
-                  </div>
-                </div>
+          <div className="w-full h-full overflow-y-auto">
+            <div className="max-w-2xl mx-auto mt-12 pb-48">
+              <div className="text-center mb-12">
+                <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-white">
+                  Choose Your Fighters
+                </h1>
+                <p className="text-zinc-400 text-lg">
+                  Select the AI models that will compete against each other.
+                </p>
               </div>
 
-              <div className="p-6 bg-zinc-900/50 border-t border-zinc-800 flex justify-center rounded-b-2xl">
-                <button
-                  onClick={startGame}
-                  className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-zinc-900 transition-all duration-200 bg-white font-pj rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 hover:bg-zinc-200"
-                >
-                  <span className="mr-2">Start Battle</span>
-                  <SparklesIcon className="w-5 h-5" />
-                </button>
+              <div className="bg-zinc-900/50 rounded-2xl shadow-xl border border-zinc-800">
+                <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-800">
+                  <div className="p-8 space-y-6 bg-zinc-900/30 rounded-t-2xl md:rounded-tr-none md:rounded-tl-2xl">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-indigo-400 shadow-sm border border-zinc-700">
+                        <XIcon className="w-7 h-7" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-xl">Player X</h3>
+                        <p className="text-sm text-zinc-400">First Move</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <ModelSelector
+                        label="AI Model"
+                        selectedModel={modelX}
+                        onSelect={setModelX}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-8 space-y-6 bg-zinc-900/30 md:rounded-tr-2xl">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-rose-400 shadow-sm border border-zinc-700">
+                        <OIcon className="w-7 h-7" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-xl">Player O</h3>
+                        <p className="text-sm text-zinc-400">Second Move</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <ModelSelector
+                        label="AI Model"
+                        selectedModel={modelO}
+                        onSelect={setModelO}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-zinc-900/50 border-t border-zinc-800 flex justify-center rounded-b-2xl">
+                  <button
+                    onClick={startGame}
+                    className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-zinc-900 transition-all duration-200 bg-white font-pj rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 hover:bg-zinc-200"
+                  >
+                    <span className="mr-2">Start Battle</span>
+                    <SparklesIcon className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
