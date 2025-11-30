@@ -98,7 +98,7 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   },
 
   // xAI
-  { model: "xai/grok-4", name: "Grok 4", provider: "xai" },
+  { model: "xai/grok-code-fast-1", name: "Grok Code Fast 1", provider: "xai" },
   { model: "xai/grok-2", name: "Grok 2", provider: "xai" },
 
   // DeepSeek
