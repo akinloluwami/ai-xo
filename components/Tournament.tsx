@@ -214,8 +214,11 @@ const TournamentGame = ({
         return;
       }
       if (checkDraw(board)) {
-        const randomWinner = Math.random() > 0.5 ? p1 : p2;
-        setTimeout(() => onGameEnd(randomWinner), 1000);
+        // Draw - rematch until winner
+        setTimeout(() => {
+          setBoard(createEmptyBoard());
+          setCurrentPlayer("X");
+        }, 2000);
         return;
       }
 
@@ -349,7 +352,13 @@ const TournamentGame = ({
       </div>
 
       <div className="mt-4 text-sm text-zinc-400 animate-pulse">
-        {isThinking ? "AI is thinking..." : "Next move..."}
+        {checkWinner(board)
+          ? "Winner found!"
+          : checkDraw(board)
+          ? "Draw! Rematching..."
+          : isThinking
+          ? "AI is thinking..."
+          : "Next move..."}
       </div>
     </div>
   );
