@@ -130,3 +130,14 @@ export const PROVIDER_LOGOS: Record<string, string> = {
   mistral: "/model-logos/mistral-ai_logo.svg",
   other: "/model-logos/openai_dark.svg",
 };
+
+export function getRandomModel(): ModelConfig {
+  return AVAILABLE_MODELS[Math.floor(Math.random() * AVAILABLE_MODELS.length)];
+}
+
+export function findModelByString(
+  modelString: string | null,
+): ModelConfig | null {
+  if (!modelString) return null;
+  return AVAILABLE_MODELS.find((m) => m.model === modelString) || null;
+}
