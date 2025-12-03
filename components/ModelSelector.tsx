@@ -8,14 +8,36 @@ interface ModelSelectorProps {
   selectedModel: ModelConfig;
   onSelect: (model: ModelConfig) => void;
   label: string;
+  onRandomize?: () => void;
 }
+
+const DiceIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+    <path d="M12 8h.01" />
+    <path d="M8 12h.01" />
+    <path d="M12 12h.01" />
+    <path d="M16 12h.01" />
+    <path d="M12 16h.01" />
+  </svg>
+);
 
 export default function ModelSelector({
   selectedModel,
   onSelect,
   label,
+  onRandomize,
 }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,21 +78,42 @@ export default function ModelSelector({
             {selectedModel.name}
           </span>
         </div>
-        <svg
-          className={`w-5 h-5 text-zinc-400 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        <div className="flex items-center gap-2">
+          {onRandomize && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSpinning(true);
+                onRandomize();
+                setTimeout(() => setIsSpinning(false), 500);
+              }}
+              className="p-1.5 hover:bg-zinc-700 rounded-md transition-colors text-zinc-400 hover:text-zinc-200"
+              title="Random model"
+            >
+              <DiceIcon
+                className={`w-4 h-4 transition-transform ${
+                  isSpinning ? "animate-spin" : ""
+                }`}
+              />
+            </button>
+          )}
+          <svg
+            className={`w-5 h-5 text-zinc-400 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
       </button>
 
       {isOpen && (
