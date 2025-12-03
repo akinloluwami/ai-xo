@@ -27,11 +27,19 @@ ${board[6] || "_"} | ${board[7] || "_"} | ${board[8] || "_"}
 
 Respond with ONLY a single number (0-8) indicating which empty position you want to play. Choose the best strategic move.`;
 
-    const { text } = await generateText({
+    // Create a timeout promise that rejects after 12 seconds
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("AI response timeout")), 12000);
+    });
+
+    // Race the AI call against the timeout
+    const aiPromise = generateText({
       model,
       prompt,
       temperature: 0.7,
     });
+
+    const { text } = await Promise.race([aiPromise, timeoutPromise]);
 
     // Extract the number from the response
     const match = text.match(/\d+/);
@@ -55,7 +63,7 @@ Respond with ONLY a single number (0-8) indicating which empty position you want
   } catch (error) {
     console.error("Error getting AI move:", error);
 
-    // Fallback to random move if AI fails
+    // Fallback to random move if AI fails or times out
     if (board && Array.isArray(board)) {
       const availablePositions = board
         .map((cell, index) => (cell === null ? index : null))
@@ -66,9 +74,16 @@ Respond with ONLY a single number (0-8) indicating which empty position you want
           availablePositions[
             Math.floor(Math.random() * availablePositions.length)
           ];
+
+        const isTimeout =
+          error instanceof Error && error.message === "AI response timeout";
+        const fallbackReason = isTimeout
+          ? "Timeout (12s) - Random"
+          : "Error - Random";
+
         return Response.json({
           position: randomPosition,
-          rawResponse: "Fallback (Random)",
+          rawResponse: fallbackReason,
         });
       }
     }
