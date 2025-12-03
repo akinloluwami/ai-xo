@@ -116,7 +116,9 @@ export default function TicTacToe() {
   const [modelO, setModelO] = useState<ModelConfig>(AVAILABLE_MODELS[3]);
   const [isThinking, setIsThinking] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [moveHistory, setMoveHistory] = useState<
+    Array<{ player: Player; position: number; info?: string }>
+  >([]);
   const [autoPlay, setAutoPlay] = useState(true);
   const historyContainerRef = useRef<HTMLDivElement>(null);
 
@@ -146,15 +148,17 @@ export default function TicTacToe() {
     setMoveHistory([]);
   };
 
-  const makeMove = async (position: number) => {
+  const makeMove = async (position: number, moveInfo?: string) => {
     if (board[position] !== null || isGameOver) return;
 
     const newBoard = [...board];
     newBoard[position] = currentPlayer;
     setBoard(newBoard);
 
-    const moveText = `${currentPlayer} played position ${position}`;
-    setMoveHistory((prev) => [...prev, moveText]);
+    setMoveHistory((prev) => [
+      ...prev,
+      { player: currentPlayer, position, info: moveInfo },
+    ]);
 
     const gameWinner = checkWinner(newBoard);
     const gameDraw = checkDraw(newBoard);
@@ -189,7 +193,7 @@ export default function TicTacToe() {
       const data = await response.json();
 
       if (data.position !== null && data.position !== undefined) {
-        await makeMove(data.position);
+        await makeMove(data.position, data.rawResponse);
       }
     } catch (error) {
       console.error("Error getting AI move:", error);
@@ -557,7 +561,14 @@ export default function TicTacToe() {
                     </div>
                   ) : (
                     moveHistory.map((move, idx) => {
-                      const isX = move.startsWith("X");
+                      const isX = move.player === "X";
+                      const isTimeout =
+                        move.info?.includes("Timeout") ||
+                        move.info?.includes("timeout");
+                      const isError =
+                        move.info?.includes("Error") ||
+                        move.info?.includes("Random");
+
                       return (
                         <div
                           key={idx}
@@ -578,8 +589,20 @@ export default function TicTacToe() {
                           </div>
                           <div className="flex-1">
                             <div className="text-zinc-300">
-                              {move.replace(/^(X|O) played /, "")}
+                              position {move.position}
                             </div>
+                            {(isTimeout || isError) && move.info && (
+                              <div
+                                className={`text-[10px] mt-1 font-medium px-2 py-0.5 rounded inline-block ${
+                                  isTimeout
+                                    ? "bg-amber-900/30 text-amber-400 border border-amber-800/50"
+                                    : "bg-orange-900/30 text-orange-400 border border-orange-800/50"
+                                }`}
+                              >
+                                {isTimeout ? "⏱️ " : "⚠️ "}
+                                {move.info}
+                              </div>
+                            )}
                             <div className="text-[10px] text-zinc-500 mt-1 font-medium">
                               Move #{idx + 1}
                             </div>
