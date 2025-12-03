@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "ai": "^5.0.104",
+    "motion": "^12.23.25",
     "next": "16.0.5",
     "posthog-js": "^1.298.1",
     "posthog-node": "^5.14.1",
