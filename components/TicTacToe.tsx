@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Board,
   Player,
@@ -12,6 +13,7 @@ import {
   checkWinner,
   checkDraw,
   getNextPlayer,
+  getWinningCombination,
 } from "@/lib/game";
 
 const XIcon = ({ className }: { className?: string }) => (
@@ -117,6 +119,9 @@ export default function TicTacToe({
   const [board, setBoard] = useState<Board>(createEmptyBoard());
   const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
   const [winner, setWinner] = useState<Player | null>(null);
+  const [winningCombination, setWinningCombination] = useState<number[] | null>(
+    null,
+  );
   const [isGameOver, setIsGameOver] = useState(false);
   const [modelX, setModelX] = useState<ModelConfig>(
     initialModelX || AVAILABLE_MODELS[0],
@@ -158,6 +163,7 @@ export default function TicTacToe({
     setBoard(createEmptyBoard());
     setCurrentPlayer("X");
     setWinner(null);
+    setWinningCombination(null);
     setIsGameOver(false);
     setMoveHistory([]);
   };
@@ -179,6 +185,7 @@ export default function TicTacToe({
 
     if (gameWinner) {
       setWinner(gameWinner);
+      setWinningCombination(getWinningCombination(newBoard));
       setIsGameOver(true);
     } else if (gameDraw) {
       setIsGameOver(true);
@@ -238,6 +245,23 @@ export default function TicTacToe({
   return (
     <div className="h-dvh bg-[#050505] text-zinc-100 font-sans selection:bg-zinc-800 flex flex-col overflow-hidden">
       <main className="flex-1 max-w-6xl mx-auto w-full p-4 md:p-8 flex flex-col min-h-0">
+        <Link
+          href="/"
+          className="mb-4 inline-flex items-center gap-2 px-3 py-2 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300 text-sm font-medium transition-colors w-fit"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-4 h-4"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </Link>
         <div className="grid lg:grid-cols-12 gap-8 flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
           <div className="lg:col-span-8 flex flex-col gap-6 lg:overflow-y-auto p-1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -315,18 +339,25 @@ export default function TicTacToe({
               )}
 
               <div className="grid grid-cols-3 gap-3 w-full max-w-[400px] aspect-square">
-                {board.map((cell, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => !autoPlay && makeMove(idx)}
-                    disabled={
-                      cell !== null || isGameOver || isThinking || autoPlay
-                    }
-                    className={`
+                {board.map((cell, idx) => {
+                  const isWinningCell =
+                    winningCombination && winningCombination.includes(idx);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => !autoPlay && makeMove(idx)}
+                      disabled={
+                        cell !== null || isGameOver || isThinking || autoPlay
+                      }
+                      className={`
                         relative rounded-xl flex items-center justify-center text-5xl transition-all duration-200 aspect-square
                         ${
                           cell === null
                             ? "bg-zinc-800 hover:bg-zinc-700"
+                            : isWinningCell
+                            ? cell === "X"
+                              ? "bg-indigo-900/40 ring-2 ring-indigo-500 shadow-lg shadow-indigo-500/50 animate-wiggle"
+                              : "bg-rose-900/40 ring-2 ring-rose-500 shadow-lg shadow-rose-500/50 animate-wiggle"
                             : "bg-zinc-800 shadow-sm ring-1 ring-zinc-700"
                         }
                         ${
@@ -335,73 +366,29 @@ export default function TicTacToe({
                             : "cursor-default"
                         }
                       `}
-                  >
-                    {cell === "X" && (
-                      <XIcon className="w-16 h-16 text-indigo-400 drop-shadow-sm" />
-                    )}
-                    {cell === "O" && (
-                      <OIcon className="w-16 h-16 text-rose-400 drop-shadow-sm" />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {isGameOver && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
-                  <div className="bg-zinc-900 p-8 rounded-2xl shadow-2xl border border-zinc-800 text-center max-w-sm mx-4 transform transition-all scale-100">
-                    <div className="mb-6">
-                      {winner ? (
-                        <>
-                          <div className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                            Winner
-                          </div>
-                          <div
-                            className={`text-5xl font-black mb-2 ${
-                              winner === "X"
-                                ? "text-indigo-500"
-                                : "text-rose-500"
-                            }`}
-                          >
-                            {winner === "X" ? "Player X" : "Player O"}
-                          </div>
-                          <div className="flex items-center justify-center gap-2 text-zinc-400 font-medium">
-                            <div className="relative w-5 h-5 shrink-0">
-                              <Image
-                                src={
-                                  PROVIDER_LOGOS[
-                                    winner === "X"
-                                      ? modelX.provider
-                                      : modelO.provider
-                                  ] || PROVIDER_LOGOS.other
-                                }
-                                alt={
-                                  winner === "X"
-                                    ? modelX.provider
-                                    : modelO.provider
-                                }
-                                fill
-                                className="object-contain"
-                              />
-                            </div>
-                            {winner === "X" ? modelX.name : modelO.name}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-4xl font-black text-zinc-200">
-                          Draw!
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={resetGame}
-                      className="w-full bg-white text-zinc-900 font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                     >
-                      <RefreshCwIcon className="w-4 h-4" />
-                      Play Again
+                      {cell === "X" && (
+                        <XIcon
+                          className={`w-16 h-16 drop-shadow-sm ${
+                            isWinningCell
+                              ? "text-indigo-300 animate-pulse"
+                              : "text-indigo-400"
+                          }`}
+                        />
+                      )}
+                      {cell === "O" && (
+                        <OIcon
+                          className={`w-16 h-16 drop-shadow-sm ${
+                            isWinningCell
+                              ? "text-rose-300 animate-pulse"
+                              : "text-rose-400"
+                          }`}
+                        />
+                      )}
                     </button>
-                  </div>
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
 
             <div className="bg-zinc-900 rounded-2xl p-4 shadow-sm border border-zinc-800 flex flex-wrap items-center justify-between gap-4">
@@ -450,79 +437,166 @@ export default function TicTacToe({
 
           <div className="lg:col-span-4 flex flex-col h-[300px] lg:h-full lg:min-h-0">
             <div className="bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 flex flex-col h-full overflow-hidden">
-              <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between shrink-0">
-                <h3 className="font-bold text-zinc-300">Match History</h3>
-                <span className="text-xs font-medium px-2 py-1 bg-zinc-700 rounded-full text-zinc-400">
-                  {moveHistory.length} moves
-                </span>
-              </div>
-
-              <div
-                ref={historyContainerRef}
-                className="flex-1 overflow-y-auto p-4 space-y-3"
-              >
-                {moveHistory.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-3 opacity-60">
-                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
-                      <PlayCircleIcon className="w-6 h-6" />
-                    </div>
-                    <p className="text-sm font-medium">
-                      Waiting for first move...
-                    </p>
+              {isGameOver ? (
+                <>
+                  <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between shrink-0">
+                    <h3 className="font-bold text-zinc-300">Game Over</h3>
                   </div>
-                ) : (
-                  moveHistory.map((move, idx) => {
-                    const isX = move.player === "X";
-                    const isTimeout =
-                      move.info?.includes("Timeout") ||
-                      move.info?.includes("timeout");
-                    const isError =
-                      move.info?.includes("Error") ||
-                      move.info?.includes("Random");
+                  <div className="flex-1 flex items-center justify-center p-6">
+                    <div className="text-center w-full">
+                      <div className="mb-6">
+                        {winner ? (
+                          <>
+                            <div className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-4">
+                              🎉 Winner 🎉
+                            </div>
 
-                    return (
-                      <div
-                        key={idx}
-                        className={`text-sm p-3 rounded-xl border flex items-start gap-3 transition-all ${
-                          isX
-                            ? "bg-indigo-900/10 border-indigo-900/30"
-                            : "bg-rose-900/10 border-rose-900/30"
-                        }`}
-                      >
-                        <div
-                          className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                            isX
-                              ? "bg-indigo-900 text-indigo-300"
-                              : "bg-rose-900 text-rose-300"
-                          }`}
-                        >
-                          {isX ? "X" : "O"}
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-zinc-300">
-                            position {move.position}
-                          </div>
-                          {(isTimeout || isError) && move.info && (
+                            {/* Large Model Logo */}
+                            <div className="flex items-center justify-center mb-4">
+                              <div
+                                className={`relative w-20 h-20 rounded-2xl p-4 ${
+                                  winner === "X"
+                                    ? "bg-indigo-900/30 ring-2 ring-indigo-500"
+                                    : "bg-rose-900/30 ring-2 ring-rose-500"
+                                }`}
+                              >
+                                <Image
+                                  src={
+                                    PROVIDER_LOGOS[
+                                      winner === "X"
+                                        ? modelX.provider
+                                        : modelO.provider
+                                    ] || PROVIDER_LOGOS.other
+                                  }
+                                  alt={
+                                    winner === "X"
+                                      ? modelX.provider
+                                      : modelO.provider
+                                  }
+                                  fill
+                                  className="object-contain p-2"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Model Name */}
+                            <div className="text-3xl font-black text-white mb-4">
+                              {winner === "X" ? modelX.name : modelO.name}
+                            </div>
+
+                            {/* Player Badge */}
                             <div
-                              className={`text-[10px] mt-1 font-medium px-2 py-0.5 rounded inline-block ${
-                                isTimeout
-                                  ? "bg-amber-900/30 text-amber-400 border border-amber-800/50"
-                                  : "bg-orange-900/30 text-orange-400 border border-orange-800/50"
+                              className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mx-auto ${
+                                winner === "X"
+                                  ? "bg-indigo-900/30 text-indigo-400"
+                                  : "bg-rose-900/30 text-rose-400"
                               }`}
                             >
-                              {isTimeout ? "⏱️ " : "⚠️ "}
-                              {move.info}
+                              {winner === "X" ? (
+                                <XIcon className="w-6 h-6" />
+                              ) : (
+                                <OIcon className="w-6 h-6" />
+                              )}
                             </div>
-                          )}
-                          <div className="text-[10px] text-zinc-500 mt-1 font-medium">
-                            Move #{idx + 1}
+                          </>
+                        ) : (
+                          <div className="mb-6">
+                            <div className="text-4xl font-black text-zinc-200 mb-2">
+                              Draw!
+                            </div>
+                            <p className="text-zinc-500 text-sm">
+                              No winner this round
+                            </p>
                           </div>
-                        </div>
+                        )}
                       </div>
-                    );
-                  })
-                )}
-              </div>
+                      <button
+                        onClick={resetGame}
+                        className="w-full bg-white text-zinc-900 font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                      >
+                        <RefreshCwIcon className="w-4 h-4" />
+                        Play Again
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between shrink-0">
+                    <h3 className="font-bold text-zinc-300">Match History</h3>
+                    <span className="text-xs font-medium px-2 py-1 bg-zinc-700 rounded-full text-zinc-400">
+                      {moveHistory.length} moves
+                    </span>
+                  </div>
+
+                  <div
+                    ref={historyContainerRef}
+                    className="flex-1 overflow-y-auto p-4 space-y-3"
+                  >
+                    {moveHistory.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-3 opacity-60">
+                        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
+                          <PlayCircleIcon className="w-6 h-6" />
+                        </div>
+                        <p className="text-sm font-medium">
+                          Waiting for first move...
+                        </p>
+                      </div>
+                    ) : (
+                      moveHistory.map((move, idx) => {
+                        const isX = move.player === "X";
+                        const isTimeout =
+                          move.info?.includes("Timeout") ||
+                          move.info?.includes("timeout");
+                        const isError =
+                          move.info?.includes("Error") ||
+                          move.info?.includes("Random");
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`text-sm p-3 rounded-xl border flex items-start gap-3 transition-all ${
+                              isX
+                                ? "bg-indigo-900/10 border-indigo-900/30"
+                                : "bg-rose-900/10 border-rose-900/30"
+                            }`}
+                          >
+                            <div
+                              className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                                isX
+                                  ? "bg-indigo-900 text-indigo-300"
+                                  : "bg-rose-900 text-rose-300"
+                              }`}
+                            >
+                              {isX ? "X" : "O"}
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-zinc-300">
+                                position {move.position}
+                              </div>
+                              {(isTimeout || isError) && move.info && (
+                                <div
+                                  className={`text-[10px] mt-1 font-medium px-2 py-0.5 rounded inline-block ${
+                                    isTimeout
+                                      ? "bg-amber-900/30 text-amber-400 border border-amber-800/50"
+                                      : "bg-orange-900/30 text-orange-400 border border-orange-800/50"
+                                  }`}
+                                >
+                                  {isTimeout ? "⏱️ " : "⚠️ "}
+                                  {move.info}
+                                </div>
+                              )}
+                              <div className="text-[10px] text-zinc-500 mt-1 font-medium">
+                                Move #{idx + 1}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
