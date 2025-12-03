@@ -78,7 +78,7 @@ Respond with ONLY a single number (0-8) indicating which empty position you want
         const isTimeout =
           error instanceof Error && error.message === "AI response timeout";
         const fallbackReason = isTimeout
-          ? "Timeout (12s) - Random"
+          ? "Model Timeout (12s) - Random"
           : "Error - Random";
 
         return Response.json({
