@@ -44,6 +44,15 @@ export function checkWinner(board: Board): Player | null {
   return null;
 }
 
+export function getWinningCombination(board: Board): number[] | null {
+  for (const [a, b, c] of WINNING_COMBINATIONS) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return [a, b, c];
+    }
+  }
+  return null;
+}
+
 export function checkDraw(board: Board): boolean {
   return board.every((cell) => cell !== null) && !checkWinner(board);
 }
