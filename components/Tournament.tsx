@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ModelConfig,
   AVAILABLE_MODELS,
@@ -13,6 +14,7 @@ import {
   checkWinner,
   checkDraw,
   getNextPlayer,
+  getWinningCombination,
 } from "@/lib/game";
 
 const TrophyIcon = ({ className }: { className?: string }) => (
@@ -203,6 +205,9 @@ const TournamentGame = ({
   const [board, setBoard] = useState<Board>(createEmptyBoard());
   const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
   const [isThinking, setIsThinking] = useState(false);
+  const [winningCombination, setWinningCombination] = useState<number[] | null>(
+    null,
+  );
 
   useEffect(() => {
     const makeMove = async () => {
@@ -210,7 +215,8 @@ const TournamentGame = ({
 
       const winner = checkWinner(board);
       if (winner) {
-        setTimeout(() => onGameEnd(winner === "X" ? p1 : p2), 1000);
+        setWinningCombination(getWinningCombination(board));
+        setTimeout(() => onGameEnd(winner === "X" ? p1 : p2), 1500);
         return;
       }
       if (checkDraw(board)) {
@@ -218,6 +224,7 @@ const TournamentGame = ({
         setTimeout(() => {
           setBoard(createEmptyBoard());
           setCurrentPlayer("X");
+          setWinningCombination(null);
         }, 2000);
         return;
       }
@@ -333,22 +340,46 @@ const TournamentGame = ({
       </div>
 
       <div className="grid grid-cols-3 gap-2 w-full max-w-[250px] aspect-square">
-        {board.map((cell, idx) => (
-          <div
-            key={idx}
-            className={`
+        {board.map((cell, idx) => {
+          const isWinningCell =
+            winningCombination && winningCombination.includes(idx);
+          return (
+            <div
+              key={idx}
+              className={`
               rounded-lg flex items-center justify-center text-3xl aspect-square
               ${
                 cell === null
                   ? "bg-zinc-800"
+                  : isWinningCell
+                  ? cell === "X"
+                    ? "bg-indigo-900/40 ring-2 ring-indigo-500 shadow-lg shadow-indigo-500/50 animate-wiggle"
+                    : "bg-rose-900/40 ring-2 ring-rose-500 shadow-lg shadow-rose-500/50 animate-wiggle"
                   : "bg-zinc-800 ring-1 ring-zinc-700"
               }
             `}
-          >
-            {cell === "X" && <XIcon className="w-10 h-10 text-indigo-400" />}
-            {cell === "O" && <OIcon className="w-10 h-10 text-rose-400" />}
-          </div>
-        ))}
+            >
+              {cell === "X" && (
+                <XIcon
+                  className={`w-10 h-10 ${
+                    isWinningCell
+                      ? "text-indigo-300 animate-pulse"
+                      : "text-indigo-400"
+                  }`}
+                />
+              )}
+              {cell === "O" && (
+                <OIcon
+                  className={`w-10 h-10 ${
+                    isWinningCell
+                      ? "text-rose-300 animate-pulse"
+                      : "text-rose-400"
+                  }`}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-4 text-sm text-zinc-400 animate-pulse">
@@ -371,6 +402,11 @@ export default function Tournament() {
   );
   const [tournamentStarted, setTournamentStarted] = useState(false);
   const [champion, setChampion] = useState<ModelConfig | null>(null);
+  const [showNextMatchAnimation, setShowNextMatchAnimation] = useState(false);
+  const [nextMatchPlayers, setNextMatchPlayers] = useState<{
+    p1: ModelConfig;
+    p2: ModelConfig;
+  } | null>(null);
 
   const startTournament = () => {
     const shuffled = [...AVAILABLE_MODELS].sort(() => Math.random() - 0.5);
@@ -462,7 +498,21 @@ export default function Tournament() {
 
     const nextIndex = currentMatchIndex + 1;
     if (nextIndex < matches.length) {
-      setCurrentMatchIndex(nextIndex);
+      const nextMatch = nextMatches[nextIndex];
+      if (nextMatch.player1 && nextMatch.player2) {
+        // Show animation before starting next match
+        setNextMatchPlayers({
+          p1: nextMatch.player1,
+          p2: nextMatch.player2,
+        });
+        setShowNextMatchAnimation(true);
+        setTimeout(() => {
+          setShowNextMatchAnimation(false);
+          setCurrentMatchIndex(nextIndex);
+        }, 3000);
+      } else {
+        setCurrentMatchIndex(nextIndex);
+      }
     } else {
       setCurrentMatchIndex(null);
     }
@@ -581,55 +631,165 @@ export default function Tournament() {
                 Arena
               </h3>
 
-              {champion ? (
-                <div className="flex flex-col items-center justify-center p-8 bg-linear-to-b from-yellow-900/20 to-zinc-900 rounded-2xl border border-yellow-500/30 text-center">
-                  <TrophyIcon className="w-16 h-16 text-yellow-500 mb-4" />
-                  <div className="text-sm text-yellow-500 font-bold uppercase tracking-wider mb-2">
-                    Champion
-                  </div>
-                  <div className="text-3xl font-black text-white mb-4">
-                    {champion.name}
-                  </div>
-                  <div className="relative w-24 h-24 mb-6">
-                    <Image
-                      src={
-                        PROVIDER_LOGOS[champion.provider] ||
-                        PROVIDER_LOGOS.other
-                      }
-                      alt={champion.provider}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors"
+              <AnimatePresence mode="wait">
+                {showNextMatchAnimation && nextMatchPlayers ? (
+                  <motion.div
+                    key="next-match-animation"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col items-center justify-center p-8 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl min-h-[400px]"
                   >
-                    New Tournament
-                  </button>
-                </div>
-              ) : activeMatch && isMatchReady ? (
-                <div className="sticky top-24">
-                  <TournamentGame
-                    key={activeMatch.id}
-                    p1={activeMatch.player1!}
-                    p2={activeMatch.player2!}
-                    onGameEnd={handleMatchEnd}
-                  />
-                  <div className="mt-4 text-center">
-                    <div className="text-sm text-zinc-400">Playing Match</div>
-                    <div className="font-mono text-xs text-zinc-600 mt-1">
-                      {activeMatch.id}
+                    <motion.div
+                      initial={{ y: -20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="text-zinc-400 text-sm font-bold uppercase tracking-wider mb-6"
+                    >
+                      ⚔️ Next Match ⚔️
+                    </motion.div>
+
+                    <div className="w-full space-y-4">
+                      <motion.div
+                        initial={{ x: -50, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.5, type: "spring" }}
+                        className="bg-indigo-900/20 border border-indigo-800 rounded-xl p-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-12 h-12 shrink-0">
+                            <Image
+                              src={
+                                PROVIDER_LOGOS[nextMatchPlayers.p1.provider] ||
+                                PROVIDER_LOGOS.other
+                              }
+                              alt={nextMatchPlayers.p1.provider}
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-bold text-indigo-400">
+                              {nextMatchPlayers.p1.name}
+                            </div>
+                            <div className="text-xs text-zinc-500 uppercase tracking-wider">
+                              Player X
+                            </div>
+                          </div>
+                          <XIcon className="w-6 h-6 text-indigo-400" />
+                        </div>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.8, type: "spring" }}
+                        className="text-center text-zinc-600 font-mono text-sm py-2"
+                      >
+                        VS
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ x: 50, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 1.1, type: "spring" }}
+                        className="bg-rose-900/20 border border-rose-800 rounded-xl p-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-12 h-12 shrink-0">
+                            <Image
+                              src={
+                                PROVIDER_LOGOS[nextMatchPlayers.p2.provider] ||
+                                PROVIDER_LOGOS.other
+                              }
+                              alt={nextMatchPlayers.p2.provider}
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-bold text-rose-400">
+                              {nextMatchPlayers.p2.name}
+                            </div>
+                            <div className="text-xs text-zinc-500 uppercase tracking-wider">
+                              Player O
+                            </div>
+                          </div>
+                          <OIcon className="w-6 h-6 text-rose-400" />
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.5 }}
+                      className="mt-6 flex items-center gap-2 text-zinc-500 text-xs"
+                    >
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      >
+                        ⚡
+                      </motion.div>
+                      Starting soon...
+                    </motion.div>
+                  </motion.div>
+                ) : champion ? (
+                  <div className="flex flex-col items-center justify-center p-8 bg-linear-to-b from-yellow-900/20 to-zinc-900 rounded-2xl border border-yellow-500/30 text-center">
+                    <TrophyIcon className="w-16 h-16 text-yellow-500 mb-4" />
+                    <div className="text-sm text-yellow-500 font-bold uppercase tracking-wider mb-2">
+                      Champion
+                    </div>
+                    <div className="text-3xl font-black text-white mb-4">
+                      {champion.name}
+                    </div>
+                    <div className="relative w-24 h-24 mb-6">
+                      <Image
+                        src={
+                          PROVIDER_LOGOS[champion.provider] ||
+                          PROVIDER_LOGOS.other
+                        }
+                        alt={champion.provider}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors"
+                    >
+                      New Tournament
+                    </button>
+                  </div>
+                ) : activeMatch && isMatchReady ? (
+                  <div className="sticky top-24">
+                    <TournamentGame
+                      key={activeMatch.id}
+                      p1={activeMatch.player1!}
+                      p2={activeMatch.player2!}
+                      onGameEnd={handleMatchEnd}
+                    />
+                    <div className="mt-4 text-center">
+                      <div className="text-sm text-zinc-400">Playing Match</div>
+                      <div className="font-mono text-xs text-zinc-600 mt-1">
+                        {activeMatch.id}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="h-[400px] flex items-center justify-center border border-zinc-800 border-dashed rounded-2xl text-zinc-600">
-                  {tournamentStarted
-                    ? "Preparing next match..."
-                    : "Waiting to start..."}
-                </div>
-              )}
+                ) : (
+                  <div className="h-[400px] flex items-center justify-center border border-zinc-800 border-dashed rounded-2xl text-zinc-600">
+                    {tournamentStarted
+                      ? "Preparing next match..."
+                      : "Waiting to start..."}
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
