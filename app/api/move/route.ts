@@ -14,18 +14,16 @@ export async function POST(req: Request) {
       throw new Error("Board is required");
     }
 
-    const prompt = `You are playing tic-tac-toe. You are player "${player}".
-The current board state is (0-8, where 0 is top-left, 8 is bottom-right):
-${board
-  .map((cell: string | null, i: number) => `${i}: ${cell || "empty"}`)
-  .join("\n")}
+    const prompt = `You are player "${player}" in tic-tac-toe.
+Board (0-8): ${board
+      .map((cell: string | null, i: number) => `${i}:${cell || "_"}`)
+      .join(" ")}
 
-Board visualization:
-${board[0] || "_"} | ${board[1] || "_"} | ${board[2] || "_"}
-${board[3] || "_"} | ${board[4] || "_"} | ${board[5] || "_"}
-${board[6] || "_"} | ${board[7] || "_"} | ${board[8] || "_"}
+${board[0] || "_"}|${board[1] || "_"}|${board[2] || "_"}
+${board[3] || "_"}|${board[4] || "_"}|${board[5] || "_"}
+${board[6] || "_"}|${board[7] || "_"}|${board[8] || "_"}
 
-Respond with ONLY a single number (0-8) indicating which empty position you want to play. Choose the best strategic move.`;
+Reply with ONE number (0-8) for your move.`;
 
     // Create a timeout promise that rejects after 12 seconds
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -37,6 +35,7 @@ Respond with ONLY a single number (0-8) indicating which empty position you want
       model,
       prompt,
       temperature: 0.7,
+      maxOutputTokens: 5, // Limit output to just a few tokens (saves costs)
     });
 
     const { text } = await Promise.race([aiPromise, timeoutPromise]);
